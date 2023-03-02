@@ -3,7 +3,7 @@ from flask import request
 
 app = Flask(__name__)
 
-@app.route("/", methods=['POST'])
+@app.route("/", methods=['GET'])
 def keyword_suggester():
     keyword_list = keyword_list_load()
     keyword_count = {}
