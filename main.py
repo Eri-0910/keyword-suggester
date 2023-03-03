@@ -3,11 +3,16 @@ from flask import request
 import MeCab
 from transformers import BertJapaneseTokenizer, BertForPreTraining
 import torch
+import pickle
 
 app = Flask(__name__)
 
 tokenizer = BertJapaneseTokenizer.from_pretrained('cl-tohoku/bert-base-japanese-char-whole-word-masking')
 model = BertForPreTraining.from_pretrained('cl-tohoku/bert-base-japanese-char-whole-word-masking', output_hidden_states = True,)
+
+keyword_embedding_list = {}
+with open('keywords_embedding.pickle', 'rb') as f:
+    keyword_embedding_list = pickle.load(f)
 
 @app.route("/", methods=['POST'])
 def keyword_suggester():
@@ -59,12 +64,9 @@ def suggest():
     s = request.json['sentence']
     s_embedding = embedding_avg(s)
 
-    keyword_list = keyword_list_load()
     keyword_count = {}
 
-    for keyword in keyword_list:
-        key_embedding = embedding_avg(keyword)
-
+    for keyword, key_embedding in keyword_embedding_list.items():
         keyword_count[keyword] = torch.cosine_similarity(s_embedding, key_embedding, dim = 0).item()
 
     sorted_count_list = sorted(keyword_count.items(), key = lambda keyword_count : keyword_count[1])
