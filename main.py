@@ -4,7 +4,7 @@ import MeCab
 
 app = Flask(__name__)
 
-@app.route("/", methods=['GET'])
+@app.route("/", methods=['POST'])
 def keyword_suggester():
     keyword_list = keyword_list_load()
     katakana_list = katakana_list_load()
