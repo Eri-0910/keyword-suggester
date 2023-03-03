@@ -9,7 +9,9 @@ def keyword_suggester():
     keyword_count = {}
     s = request.json['sentence']
     for keyword in keyword_list:
-        keyword_count[keyword] = s.count(keyword)
+        count =  s.count(keyword)
+        if count > 0:
+            keyword_count[keyword] = count
     return keyword_count
 
 def keyword_list_load():
