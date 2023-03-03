@@ -23,9 +23,9 @@ def get_keyword():
     match_size = min(5, len(match))
     match =  select_from_simuler(match, match_size)
     match = dict([(k, 1) for k in match])
-    suggest =  select_from_simuler(suggest, 20-match_size)
+    res =  select_from_simuler({**suggest, **match}, 20)
 
-    return {**suggest, **match}
+    return res
 
 @app.route("/match", methods=['POST'])
 def get_matcht_keyword():
