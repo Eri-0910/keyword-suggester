@@ -1,13 +1,13 @@
 from flask import Flask
 from flask import request
 import MeCab
-from transformers import AlbertTokenizer, AlbertForPreTraining
+from transformers import BertJapaneseTokenizer, BertForPreTraining
 import torch
 
 app = Flask(__name__)
 
-tokenizer = AlbertTokenizer.from_pretrained('ALINEAR/albert-japanese-v2')
-model = AlbertForPreTraining.from_pretrained('ALINEAR/albert-japanese-v2', output_hidden_states = True,)
+tokenizer = BertJapaneseTokenizer.from_pretrained('cl-tohoku/bert-base-japanese-char-whole-word-masking')
+model = BertForPreTraining.from_pretrained('cl-tohoku/bert-base-japanese-char-whole-word-masking', output_hidden_states = True,)
 
 @app.route("/", methods=['POST'])
 def keyword_suggester():
