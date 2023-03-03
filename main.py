@@ -15,12 +15,43 @@ with open('keywords_embedding.pkl', 'rb') as f:
     keyword_embedding_list = pickle.load(f)
 
 @app.route("/", methods=['POST'])
-def keyword_suggester():
+def get_keyword():
+    s = request.json['sentence']
+    suggest = keyword_suggester(s)
+    match = keyword_matcher(s)
+
+    match_size = min(5, len(match))
+    match =  select_from_simuler(match, match_size)
+    match = dict([(k, 1) for k in match])
+    suggest =  select_from_simuler(suggest, 20-match_size)
+
+    return {**suggest, **match}
+
+@app.route("/match", methods=['POST'])
+def get_matcht_keyword():
+    s = request.json['sentence']
+    return keyword_matcher(s)
+
+@app.route("/suggest", methods=["POST"])
+def get_suggest_keyword():
+    s = request.json['sentence']
+    return keyword_suggester(s)
+
+def keyword_suggester(s):
+    s_embedding = embedding_avg(s)
+
+    keyword_count = {}
+
+    for keyword, key_embedding in keyword_embedding_list.items():
+        keyword_count[keyword] = torch.cosine_similarity(s_embedding, key_embedding, dim = 1).item()
+
+    return select_from_simuler(keyword_count, 20)
+
+def keyword_matcher(s):
     keyword_list = keyword_list_load()
     katakana_list = katakana_list_load()
     keyword_count = {}
     katakana_count = {}
-    s = request.json['sentence']
     s_katakana = ""
 
     # 形態素解析追加
@@ -59,20 +90,6 @@ def keyword_suggester():
 
     return res
 
-@app.route("/suggest", methods=["POST"])
-def suggest():
-    s = request.json['sentence']
-    s_embedding = embedding_avg(s)
-
-    keyword_count = {}
-
-    for keyword, key_embedding in keyword_embedding_list.items():
-        keyword_count[keyword] = torch.cosine_similarity(s_embedding, key_embedding, dim = 1).item()
-
-    sorted_count_list = sorted(keyword_count.items(), key = lambda keyword_count : keyword_count[1])
-
-    return dict(sorted_count_list[-20:])
-
 def embedding_avg(s):
     input_ids = torch.tensor(tokenizer.encode(s, add_special_tokens=True, max_length=512)).unsqueeze(0)  # Batch size 1
     outputs = model(input_ids)
@@ -91,3 +108,8 @@ def list_load(file):
         list = [k.strip() for k in f.readlines()]
     f.close()
     return list
+
+def select_from_simuler(dic, num):
+    sorted_list = sorted(dic.items(), key = lambda dic : dic[1])
+
+    return dict(sorted_list[-num:])
