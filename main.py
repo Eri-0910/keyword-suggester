@@ -11,7 +11,7 @@ tokenizer = BertJapaneseTokenizer.from_pretrained('cl-tohoku/bert-base-japanese-
 model = BertForPreTraining.from_pretrained('cl-tohoku/bert-base-japanese-char-whole-word-masking', output_hidden_states = True,)
 
 keyword_embedding_list = {}
-with open('keywords_embedding.pickle', 'rb') as f:
+with open('keywords_embedding.pkl', 'rb') as f:
     keyword_embedding_list = pickle.load(f)
 
 @app.route("/", methods=['POST'])
@@ -67,17 +67,17 @@ def suggest():
     keyword_count = {}
 
     for keyword, key_embedding in keyword_embedding_list.items():
-        keyword_count[keyword] = torch.cosine_similarity(s_embedding, key_embedding, dim = 0).item()
+        keyword_count[keyword] = torch.cosine_similarity(s_embedding, key_embedding, dim = 1).item()
 
     sorted_count_list = sorted(keyword_count.items(), key = lambda keyword_count : keyword_count[1])
 
     return dict(sorted_count_list[-20:])
 
 def embedding_avg(s):
-    input_ids = torch.tensor(tokenizer.encode(s, add_special_tokens=True)).unsqueeze(0)  # Batch size 1
+    input_ids = torch.tensor(tokenizer.encode(s, add_special_tokens=True, max_length=512)).unsqueeze(0)  # Batch size 1
     outputs = model(input_ids)
 
-    return torch.mean(outputs[0][0], dim=0)
+    return torch.mean(outputs.hidden_states[-1], dim=1)
 
 def katakana_list_load():
     return list_load('keywords_katakana.txt')
